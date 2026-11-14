@@ -1,6 +1,6 @@
 # Citu Compiler – Project Documentation
 
-**Course:** Compiler Construction
+**Course:** CS426 – Compiler Construction
 **Student ID:** `Bscs23168`
 **Name:** `Mihab Khan`
 **Repository URL:** `https://github.com/mihabkhan/citu-compiler`
@@ -97,7 +97,7 @@ avg medalo 10.5 / 2.0;
 likho(avg);          // prints 5.25
 ```
 
-### Program 3 – Find the largest element and search for a character
+### Program 3 – Find the largest element and assign a grade
 Shows `int16`, `uint16`, `char`, `agar … warna … khatam`, and nested blocks.
 
 ```
@@ -328,60 +328,60 @@ prog.citu ──► [Lexer] ──► prog.tok
 All intermediate files are plain UTF-8 text. They use the same base name as the source file.
 
 ### 4.1 Lexer output – `prog.tok`
-The file has one token per line in tab-separated columns: `LINE  COL  TOKEN_TYPE  LEXEME`. The last line is always `EOF`.
+The file has one token per line in tab-separated columns: `LINE  COL  TOKEN_TYPE  LEXEME`. The last line is always `EOF`. The examples below are for Program 1 (`sum.citu`); line 1 is the comment, which the lexer skips.
 ```
-1	1	TYPE	int32
-1	7	IDENTIFIER	a
-1	8	PUNCT	[
-1	9	INT_LIT	5
-1	10	PUNCT	]
-1	11	PUNCT	;
+2	1	TYPE	int32
+2	7	IDENTIFIER	a
+2	8	PUNCT	[
+2	9	INT_LIT	5
+2	10	PUNCT	]
+2	11	PUNCT	;
 ...
-16	1	KEYWORD	jabtak
-16	8	PUNCT	(
-16	9	IDENTIFIER	i
-16	11	RELOP	<
-16	13	INT_LIT	5
-16	14	PUNCT	)
-16	16	KEYWORD	shro
+15	1	KEYWORD	jabtak
+15	8	PUNCT	(
+15	9	IDENTIFIER	i
+15	11	RELOP	<
+15	13	INT_LIT	5
+15	14	PUNCT	)
+15	16	KEYWORD	shro
 ...
-27	1	EOF	<EOF>
+24	1	EOF	<EOF>
 ```
 
 ### 4.2 Parser output – `prog.ast`
 This is an indented tree with one node per line: `NODE_TYPE [value] (line N)`. Each level of nesting is indented by two spaces.
 ```
 PROGRAM
-  DECL int32 a[5] (line 1)
-  DECL int32 i (line 2)
-  DECL int32 sum (line 3)
-  ASSIGN (line 5)
+  DECL int32 a[5] (line 2)
+  DECL int32 i (line 3)
+  DECL int32 sum (line 4)
+  ASSIGN (line 6)
     INDEX a
       INT 0
     INT 4
   ...
-  WHILE (line 16)
+  WHILE (line 15)
     COND <
       IDENT i
       INT 5
-    IF (line 17)
+    IF (line 16)
       COND =
         INDEX a
           IDENT i
         INT 0
-      BREAK (line 18)
-    ASSIGN (line 20)
+      BREAK (line 17)
+    ASSIGN (line 19)
       IDENT sum
       BINOP +
         IDENT sum
         INDEX a
           IDENT i
-    ASSIGN (line 21)
+    ASSIGN (line 20)
       IDENT i
       BINOP +
         IDENT i
         INT 1
-  PRINT (line 24)
+  PRINT (line 23)
     IDENT sum
 ```
 
@@ -389,9 +389,9 @@ PROGRAM
 This is the symbol table as a fixed-width table. Any semantic errors and warnings appear below it.
 ```
 NAME      TYPE    KIND      SIZE  BYTES  OFFSET  LINE
-a         int32   ARRAY     5     20     0       1
-i         int32   VARIABLE  0     4      20      2
-sum       int32   VARIABLE  0     4      24      3
+a         int32   ARRAY     5     20     0       2
+i         int32   VARIABLE  0     4      20      3
+sum       int32   VARIABLE  0     4      24      4
 --
 ERRORS: 0
 WARNINGS: 0
@@ -455,7 +455,7 @@ L1: lw   $t0, i
 ### Repository layout
 ```
 citu-compiler/
-├── docs/
+├── doc/
 │   └── Citu_Compiler_Documentation.md   ← this document
 └── README.md
 ```
