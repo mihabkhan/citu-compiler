@@ -3,7 +3,7 @@
 **Course:** Compiler Construction
 **Student ID:** `Bscs23168`
 **Name:** `Mihab Khan`
-**Repository URL:** `https://github.com/mihabkhan/citu-compiler.git`
+**Repository URL:** `https://github.com/mihabkhan/citu-compiler`
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## Overview
 
-Citu is a small imperative language with Roman-Urdu keywords. It supports
+Citu is a small imperative language with Urdu/Roman-Urdu keywords. It supports
 typed scalar variables, one-dimensional arrays, a `jabtak` (while) loop, an
 `agar` (if) / `warna` (else) conditional, a `nikal` (break) statement, and
 assignment with `medalo` ("put into").
@@ -447,20 +447,15 @@ L1: lw   $t0, i
 
 | Field | Value |
 |---|---|
-| **Student ID** | `<YOUR-STUDENT-ID>` |
-| **Repository URL** | `<https://github.com/<username>/<repo-name>>` |
-| **Commit # (hash) of this submission** | `Given in submission text` |
+| **Student ID** | Bscs23168 |
+| **Repository URL** | https://github.com/mihabkhan/citu-compiler |
+| **Commit # (hash) of this submission** | Given in submission text |
 | **Collaborators added** | umarsuleman@gmail.com, mscs24052@itu.edu.pk |
 
 ### Repository layout
 ```
-<repo-name>/
+citu-compiler/
 ├── docs/
 │   └── Citu_Compiler_Documentation.md   ← this document
-├── examples/
-│   ├── sum.citu
-│   ├── factorial.citu
-│   └── largest.citu
-├── src/            (lexer, parser, semantic, codegen source files)
 └── README.md
 ```
