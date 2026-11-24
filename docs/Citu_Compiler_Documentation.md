@@ -302,6 +302,18 @@ Parsing notes:
    - `v.f` is valid only if `v` is a struct variable and `f` is a member of its struct.
    - A whole struct cannot be assigned, compared, printed or read; only its members can.
 
+#### Details fixed by the semantic analyzer (Phase 3)
+These points were left open by the rules above and are settled as follows:
+- **Literal types:** an integer literal is `int32`, or `uint32` if it is larger than 2147483647. A literal larger than 4294967295 is an **error**. A real literal is `real` and a character literal is `char`.
+- **Mixed widths:** when a signed and an unsigned integer of the same width are mixed, the result is the unsigned type (for example `int16 + uint16` gives `uint16`).
+- **Integer narrowing:** assigning a wider integer value to a narrower integer variable is allowed without a message, but a *constant* that does not fit the target (for example `int16 x medalo 40000;` or `char c medalo 300;`) gives a **warning**.
+- **Negative values:** rule 5 covers any negative constant (`-5`, `-2.5`), and applies equally to arguments and return values. `- - 5` and `-0` are not negative.
+- **Constant indexes:** an index that is a constant outside `0 … size-1` is an **error**.
+- **Division by zero:** `/` or `%` with the constant `0` as the right operand gives a **warning**.
+- **Limits:** an array has at most 1,000,000 elements, a function at most 8 parameters (`Param params[8]`), a struct at most 16 members (`Member members[16]`), and one scope at most 16,777,216 bytes of variables. A struct must have at least one member. Exceeding any limit is an **error**.
+- **Missing `wapas`:** a path "reaches the end" unless the last such path ends in `wapas`, or in an `agar … warna … khatam` whose two branches both always return. A `jabtak` loop never counts as always returning.
+- **Separate name spaces:** variables, functions and structs have separate tables, so a variable and a function may share a name. `f(…)` always means the function and `f` alone always means the variable.
+
 ### 2.4 Operator Precedence (high → low)
 | Level | Operators | Associativity |
 |---|---|---|
@@ -406,7 +418,7 @@ typedef struct { StructSymbol *buckets[211]; } StructTable;
 ### 3.6 Abstract Syntax Tree (AST)
 ```c
 typedef enum {
-    N_PROGRAM, N_DECL, N_ASSIGN, N_WHILE, N_IF, N_BREAK,
+    N_PROGRAM, N_DECL, N_ASSIGN, N_WHILE, N_IF, N_ELSE, N_BREAK,
     N_PRINT, N_READ, N_COND, N_BINOP, N_UNARY,
     N_IDENT, N_INDEX, N_INT, N_REAL, N_CHAR,
     N_FUNC, N_PARAM, N_RETURN, N_CALL,     // functions
@@ -415,7 +427,7 @@ typedef enum {
 
 typedef struct ASTNode {
     NodeType  kind;
-    char      value[64];       // operator, name or literal text
+    char      value[128];      // operator, name or literal text
     char      dataType[8];     // filled in by semantic analysis
     int       line;
     struct ASTNode **children; // ordered child list
@@ -423,7 +435,7 @@ typedef struct ASTNode {
     struct ASTNode  *elseBody; // used only by N_IF
 } ASTNode;
 ```
-Notes: an `N_DECL` with an initialiser has the initial-value expression as its only child. `N_FUNC` has the `N_PARAM` nodes first, then the body statements. `N_CALL` has the arguments as children. `N_MEMBER` is a leaf whose `value` is `var.field`.
+Notes: an `N_DECL` with an initialiser has the initial-value expression as its only child. `N_FUNC` has the `N_PARAM` nodes first, then the body statements. `N_CALL` has the arguments as children. `N_MEMBER` is a leaf whose `value` is `var.field`. `elseBody` points to an `N_ELSE` node whose children are the `warna` statements. `value` holds 128 bytes because a declaration such as `struct <31-character name> <31-character name>` does not fit in 64.
 
 ### 3.7 Intermediate Code (Three-Address Code / Quadruples)
 ```c
@@ -549,8 +561,28 @@ PROGRAM
     IDENT sum
 ```
 
+Other node forms: `UNARY -`, `REAL 10.5` and `CHAR 'A'` are expression nodes. Parentheses produce no node, because the tree shape already records the grouping. A `warna` part is printed as an `ELSE` node after the other children of its `IF`:
+```
+IF (line 29)
+  COND >=
+    MEMBER s.marks
+    INT 40
+  ASSIGN (line 30)
+    MEMBER s.grade
+    CHAR 'A'
+  ELSE
+    ASSIGN (line 32)
+      MEMBER s.grade
+      CHAR 'B'
+```
+
+If the source has a lexical error, no `prog.tok` is written. If it has a syntax error, no `prog.ast` is written. In both cases every error found is printed in this form:
+```
+[Parser] line 3, column 11: expected ';' after the assignment but found 'y'
+```
+
 ### 4.3 Semantic analyzer output – `prog.sym`
-This is the symbol table as a fixed-width table. Functions and structs (if the program has any) get their own sections below it. Any semantic errors and warnings appear at the end. Example for Program 1:
+This is the symbol table as a fixed-width table. Functions and structs (if the program has any) get their own sections below it. Any semantic errors and warnings appear at the end. Each column is as wide as its longest entry plus two spaces, with a minimum width. Globals are listed first, then the parameters and locals of each function in source order. Example for Program 1:
 ```
 NAME      TYPE    KIND      SIZE  BYTES  OFFSET  SCOPE   LINE
 a         int32   ARRAY     5     20     0       global  2
@@ -714,6 +746,17 @@ WARNINGS: 0
 ```
 Offsets of locals and parameters are relative to the start of their function's frame.
 
+**`.sym` with errors and warnings (end of the file).** `prog.ast` stores line numbers but not columns, so semantic messages give the line only. They are listed in line order:
+```
+--
+ERRORS: 2
+  line 3: 'y' is not declared
+  line 7: 'nikal' can only be used inside a 'jabtak' loop
+WARNINGS: 1
+  line 5: the real value assigned to 'x' is truncated to int32
+```
+The same messages are printed to stderr as `[Semantic] line 3: 'y' is not declared` and `[Semantic] line 5: warning: …`. `prog.sym` is written even when there are errors. The analyzer's exit status is 0 when there are no errors (warnings are allowed), 1 when there are errors, and 2 when `prog.ast` cannot be read or does not have the format of section 4.2.
+
 **`.sym` (Program 3: struct layout and variables)**
 ```
 NAME      TYPE     KIND       SIZE  BYTES  OFFSET  SCOPE   LINE
@@ -801,5 +844,9 @@ s.marks = t1
 citu-compiler/
 ├── doc/
 │   └── Citu_Compiler_Documentation.md   ← this document
+├── src/
+│   ├── lexer.c                          ← lexer: prog.citu → prog.tok
+│   ├── parser.c                         ← parser: prog.tok → prog.ast
+│   └── semantic.c                       ← semantic analyzer: prog.ast → prog.sym
 └── README.md
 ```
