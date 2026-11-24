@@ -842,11 +842,11 @@ s.marks = t1
 ### Repository layout
 ```
 citu-compiler/
-├── doc/
+├── docs/
 │   └── Citu_Compiler_Documentation.md   ← this document
-├── src/
-│   ├── lexer.c                          ← lexer: prog.citu → prog.tok
-│   ├── parser.c                         ← parser: prog.tok → prog.ast
-│   └── semantic.c                       ← semantic analyzer: prog.ast → prog.sym
+|   ├── lexer.c                          ← lexer: prog.citu → prog.tok
+│   ├── parser.c                         ← parser: prog.tok → prog.ast                         
+│   ├── semantic.c                       ← semantic analyzer: prog.ast → prog.sym
+│   
 └── README.md
 ```
